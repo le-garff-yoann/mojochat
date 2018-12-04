@@ -1,0 +1,134 @@
+---
+
+stages:
+  - go test
+  - go build
+  - docker build
+  - docker release
+  - deploy
+
+go:test:ut:
+  stage: go test
+  services:
+    - postgres:10.6
+  variables:
+    POSTGRES_DB: db
+    POSTGRES_USER: db
+    POSTGRES_PASSWORD: db
+  image: golang:1.11.2
+  before_script:
+    - cd $GOPATH/src
+    - mkdir -p "gitlab.com/${CI_PROJECT_NAMESPACE}"
+    - cd "gitlab.com/${CI_PROJECT_NAMESPACE}"
+    - ln -s $CI_PROJECT_DIR
+    - cd $CI_PROJECT_NAME
+  script:
+    - TEST_PG_DSN=postgresql://db:db@postgres/db?sslmode=disable go test -short
+
+go:build:
+  stage: go build
+  image: golang:1.11.2
+  before_script:
+    - cd $GOPATH/src
+    - mkdir -p "gitlab.com/${CI_PROJECT_NAMESPACE}"
+    - cd "gitlab.com/${CI_PROJECT_NAMESPACE}"
+    - ln -s $CI_PROJECT_DIR
+    - cd $CI_PROJECT_NAME
+  script:
+    - CGO_ENABLED=0 GOOS=linux go build -o mojochat
+  artifacts:
+    paths:
+      - mojochat
+      - dist/
+
+docker:build:
+  stage: docker build
+  services:
+    - docker:dind
+  image: docker:git
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+  script:
+    - docker build -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" .
+    - docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+  dependencies: 
+    - go:build
+
+docker:release:
+  stage: docker release
+  services:
+    - docker:dind
+  image: docker:git
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+  script:
+    - docker pull "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+    - >
+      [[ "$(git tag | tail -1)" != "" ]] &&
+      docker tag "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" "${CI_REGISTRY_IMAGE}:$(git tag | tail -1)" &&
+      docker push "${CI_REGISTRY_IMAGE}:$(git tag | tail -1)"
+    - docker tag "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" "${CI_REGISTRY_IMAGE}:latest"
+    - docker push "${CI_REGISTRY_IMAGE}:latest"
+  only:
+    - master
+    - tags
+
+deploy:staging:stop:
+  stage: deploy
+  tags:
+    - helm
+  variables:
+    GIT_STRATEGY: none
+  environment:
+    name: staging/$CI_COMMIT_REF_NAME
+    action: stop
+  script:
+    - helm delete --purge "mojochat-${CI_ENVIRONMENT_SLUG}"
+  allow_failure: true
+  except:
+    - tags
+  when: manual
+
+deploy:staging:
+  stage: deploy
+  tags:
+    - helm
+  environment:
+    name: staging/$CI_COMMIT_REF_NAME
+    url: https://mojochat-${CI_ENVIRONMENT_SLUG}.$MY_K8S_INGRESS_DOMAIN
+    on_stop: deploy:staging:stop
+  before_script:
+    - helm repo add my-helm $MY_HELM_REPO
+    - helm repo update
+  script:
+    - >
+      helm upgrade --install --namespace mojochat-staging
+      --set image.pullPolicy=Always
+      --set image.tag=$CI_COMMIT_SHA
+      --set ingress.enabled=true
+      --set ingress.hosts[0]="mojochat-${CI_ENVIRONMENT_SLUG}.${MY_K8S_INGRESS_DOMAIN}"
+      "mojochat-${CI_ENVIRONMENT_SLUG}" my-helm/mojochat
+  except:
+    - tags
+
+deploy:production:
+  stage: deploy
+  tags:
+    - helm
+  environment:
+    name: production
+    url: https://mojochat.$MY_K8S_INGRESS_DOMAIN
+  before_script:
+    - helm repo add my-helm $MY_HELM_REPO
+    - helm repo update
+  script:
+    - >
+      helm upgrade --install --namespace mojochat-production
+      --set image.pullPolicy=Always
+      --set image.tag="$(git tag | tail -1)"
+      --set ingress.enabled=true
+      --set ingress.hosts[0]="mojochat.${MY_K8S_INGRESS_DOMAIN}"
+      mojochat-production my-helm/mojochat
+  only:
+    - tags
+  when: manual

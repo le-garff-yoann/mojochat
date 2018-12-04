@@ -1,0 +1,23 @@
+# github.com/go-pg/pg v6.15.1+incompatible
+github.com/go-pg/pg
+github.com/go-pg/pg/internal
+github.com/go-pg/pg/internal/pool
+github.com/go-pg/pg/orm
+github.com/go-pg/pg/types
+github.com/go-pg/pg/internal/parser
+# github.com/gorilla/context v1.1.1
+github.com/gorilla/context
+# github.com/gorilla/mux v1.6.2
+github.com/gorilla/mux
+# github.com/gorilla/websocket v1.4.0
+github.com/gorilla/websocket
+# github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a
+github.com/jinzhu/inflection
+# github.com/posener/wstest v0.0.0-20180217133618-28272a7ea048
+github.com/posener/wstest
+# github.com/satori/go.uuid v1.2.0
+github.com/satori/go.uuid
+# golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
+golang.org/x/crypto/pbkdf2
+# mellium.im/sasl v0.2.1
+mellium.im/sasl
