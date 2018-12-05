@@ -1,11 +1,24 @@
 ---
 
 stages:
+  - vue build
   - go test
   - go build
   - docker build
   - docker release
   - deploy
+
+vue:build:
+  stage: vue build
+  image: node:11.3
+  before_script:
+    - cd vue/mojochat/
+  script:
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - vue/mojochat/dist/
 
 go:test:ut:
   stage: go test
@@ -39,7 +52,8 @@ go:build:
   artifacts:
     paths:
       - mojochat
-      - dist/
+  dependencies:
+    - vue:build
 
 docker:build:
   stage: docker build
@@ -51,8 +65,9 @@ docker:build:
   script:
     - docker build -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" .
     - docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-  dependencies: 
+  dependencies:
     - go:build
+    - vue:build
 
 docker:release:
   stage: docker release

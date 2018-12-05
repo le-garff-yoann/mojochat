@@ -17,7 +17,6 @@ import (
 )
 
 var (
-	title   = "Mojochat"
 	botUUID = "root"
 )
 
@@ -43,7 +42,7 @@ func NewApp(pgURI string) *App {
 
 	dbOpts, err := pg.ParseURL(pgURI)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 
 	db := pg.Connect(dbOpts)
@@ -128,7 +127,7 @@ func NewApp(pgURI string) *App {
 		}
 	}).Name("chat")
 
-	r.Handle("/", http.FileServer(http.Dir("dist"))).Methods("GET").Name("index")
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("vue/mojochat"))).Methods("GET").Name("index")
 
 	return &App{r, db, &wsUpgrader}
 }
@@ -137,7 +136,7 @@ func NewApp(pgURI string) *App {
 func (a *App) Run(port string) {
 	http.Handle("/", a.Router)
 
-	log.Printf("%s is listening on %s", title, port)
+	log.Printf("Listening on %s", port)
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
