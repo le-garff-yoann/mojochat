@@ -1,15 +1,22 @@
 ---
-
 stages:
-  - vue build
-  - go test
-  - go build
+  - frontend
+  - backend
   - docker build
   - docker release
   - deploy
 
+vue:test:ut:
+  stage: frontend
+  image: node:11.3
+  before_script:
+    - cd vue/mojochat/
+  script:
+    - npm install
+    - npm test
+
 vue:build:
-  stage: vue build
+  stage: frontend
   image: node:11.3
   before_script:
     - cd vue/mojochat/
@@ -20,8 +27,8 @@ vue:build:
     paths:
       - vue/mojochat/dist/
 
-go:test:ut:
-  stage: go test
+go:test:
+  stage: backend
   services:
     - postgres:10.6
   variables:
@@ -39,7 +46,7 @@ go:test:ut:
     - TEST_PG_DSN=postgresql://db:db@postgres/db?sslmode=disable go test -short
 
 go:build:
-  stage: go build
+  stage: backend
   image: golang:1.11.2
   before_script:
     - cd $GOPATH/src

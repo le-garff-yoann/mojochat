@@ -4,10 +4,10 @@
       <div class="col">
         <input
           type="text"
-          placeholder=">"
+          placeholder="Write a message..."
           class="container-fluid bubble"
           ref="bodyInput"
-          v-on:keyup.13="submitMessageBody"
+          @keyup.enter="submitMessageBody"
           v-bind:disabled="! ws.isConnected"
         />
       </div>
@@ -20,8 +20,7 @@
           :key="i"
           v-bind:class="msg.me ? 'me' : 'others'"
         >
-          <p>{{ msg.body }}</p>
-          <span class="meta-right"><b>{{ msg.uuid }}</b> @ <i>{{ msg.datetime }}</i></span>
+          <p v-html="msg.body"></p><span class="meta-right"><b>{{ msg.uuid }}</b> @ <i>{{ msg.datetime }}</i></span>
         </div>
       </div>
     </div>
@@ -29,6 +28,11 @@
 </template>
 
 <script>
+import Vue from 'vue'
+import VueNativeSock from 'vue-native-websocket'
+
+Vue.use(VueNativeSock, 'ws://localhost:8080', { connectManually: true })
+
 export default {
   name: 'app',
   data() {
@@ -37,29 +41,26 @@ export default {
       ws: { isConnected: false }
     }
   },
-  mounted() {
-    this.$options.sockets.onopen = () => {
-      this.ws.isConnected = true
-    }
+  created() {
+    this.$options.sockets.onopen = () => this.ws.isConnected = true
+    this.$options.sockets.onclose = () => this.ws.isConnected = false
 
-    this.$options.sockets.onclose = () => {
-      this.ws.isConnected = false
-    }
+    this.$options.sockets.onmessage = (e) => this.messages.unshift(JSON.parse(e.data))
 
-    this.$options.sockets.onmessage = (e) => {
-      this.messages.unshift(JSON.parse(e.data))
-    }
-
-    this.$connect('ws' + (window.location.protocol === 'https:' ? 's' : '') + '://' + window.location.host + window.location.pathname + 'chat')
+    this.$connect(`ws${window.location.protocol === 'https:' ? 's' : ''}://${window.location.host}${window.location.pathname}chat`)
   },
   methods: {
     submitMessageBody(e) {
       let bodyInput = this.$refs.bodyInput
 
       if (bodyInput.value.length) {
-        this.$socket.send(bodyInput.value)
+        try {
+          this.$socket.send(bodyInput.value)
 
-        bodyInput.value = null
+          bodyInput.value = null
+        } catch (ex) {
+          throw ex
+        }
       }
 
       e.preventDefault()
