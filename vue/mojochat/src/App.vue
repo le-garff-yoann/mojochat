@@ -20,7 +20,7 @@
           :key="i"
           v-bind:class="msg.me ? 'me' : 'others'"
         >
-          <p v-html="msg.body"></p><span class="meta-right"><b>{{ msg.uuid }}</b> @ <i>{{ msg.datetime }}</i></span>
+          <p class="messageBody">{{ msg.body }}</p><span class="meta-right"><span class="messageUUID">{{ msg.uuid }}</span> @ <span class="messageDatetime">{{ msg.datetime }}</span></span>
         </div>
       </div>
     </div>
@@ -107,5 +107,17 @@ export default {
 
 .meta-right {
   float: right;
+}
+
+.messageBody {
+  font-weight: normal;
+}
+
+.messageUUID {
+  font-weight: bold;
+}
+
+.messageDatetime {
+  font-style: italic;
 }
 </style>

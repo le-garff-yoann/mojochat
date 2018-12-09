@@ -46,8 +46,8 @@ describe('App.vue', () => {
 
   it('renders messages', () => {
     const messages = [
-      { datetime: 0, uuid: 0, body: 0, me: true },
-      { datetime: 1, uuid: 1, body: 1, me: false }
+      { datetime: '<p>0</p>', uuid: '<p>0</p>', body: '<p>0</p>', me: true },
+      { datetime: '<p>1</p>', uuid: '<p>1</p>', body: '<p>1</p>', me: false }
     ]
 
     for (const msg of messages) {
@@ -57,8 +57,13 @@ describe('App.vue', () => {
     const bubbles = blabla.findAll('.bubble')
 
     for (const [i, msg] of messages.entries()) {
-      expect(bubbles.at(i).html()).toBe(`<div class="container-fluid bubble ${msg.me ? 'me' : 'others'}"><p>${msg.body}</p><span class="meta-right"><b>${msg.uuid}</b> @ <i>${msg.datetime}</i></span></div>`)
+      const bubble = bubbles.at(i).find('div')
+
+      expect(bubble.classes()).toContain(msg.me ? 'me' : 'others')
+
+      expect(bubble.find('.messageBody').text()).toBe(msg.body)
+      expect(bubble.find('.messageUUID').text()).toBe(msg.uuid)
+      expect(bubble.find('.messageDatetime').text()).toBe(msg.datetime)
     }
   })
 })
-
