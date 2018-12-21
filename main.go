@@ -108,7 +108,7 @@ func NewApp(pgURI string) *App {
 		for {
 			messageType, p, err := c.ReadMessage()
 			if err != nil {
-				gb <- true
+				gb <- nil
 
 				break
 			}
