@@ -31,7 +31,7 @@ describe('App.vue', () => {
 
   const app = wrapper.find(App)
 
-  const bodyInput = app.find({ ref: 'bodyInput' })
+  const bodyInput = app.find('#bodyInput')
   const blabla = app.find('#blabla')
 
   it('renders app', () => {

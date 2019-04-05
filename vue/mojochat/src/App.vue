@@ -1,42 +1,52 @@
 <template>
-  <div id="app" class="container-fluid">
-    <div class="row">
-      <div class="col">
-        <input
-          type="text"
+  <b-container id="app" fluid>
+    <b-row>
+      <b-col>
+        <b-form-input
+          id="bodyInput"
           placeholder="Write a message..."
-          class="container-fluid bubble"
-          ref="bodyInput"
-          @keyup.enter="submitMessageBody"
+          v-model="bodyInput"
+          @keydown.enter.native="submitMessageBody"
+
+          class="bubble"
           v-bind:disabled="! ws.isConnected"
-        />
-      </div>
-    </div>
-    <div class="row">
-      <div class="col" id="blabla">
-        <div
-          class="container-fluid bubble"
+        >
+        </b-form-input>
+      </b-col>
+    </b-row>
+
+    <b-row>
+      <b-col id="blabla">
+        <b-container
           v-for="(msg, i) in messages"
           :key="i"
+
+          fluid
+          class="bubble"
           v-bind:class="msg.me ? 'me' : 'others'"
         >
           <p class="messageBody">{{ msg.body }}</p><span class="meta-right"><span class="messageUUID">{{ msg.uuid }}</span> @ <span class="messageDatetime">{{ msg.datetime }}</span></span>
-        </div>
-      </div>
-    </div>
-  </div>
+        </b-container>
+      </b-col>
+    </b-row>
+  </b-container>
 </template>
 
 <script>
 import Vue from 'vue'
 import VueNativeSock from 'vue-native-websocket'
-
 Vue.use(VueNativeSock, 'ws://localhost:8080', { connectManually: true })
+
+import BootstrapVue from 'bootstrap-vue'
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue/dist/bootstrap-vue.css'
+Vue.use(BootstrapVue);
 
 export default {
   name: 'app',
   data() {
     return {
+      bodyInput: '',
       messages: [],
       ws: { isConnected: false }
     }
@@ -47,23 +57,21 @@ export default {
 
     this.$options.sockets.onmessage = (e) => this.messages.unshift(JSON.parse(e.data))
 
-    this.$connect(`ws${window.location.protocol === 'https:' ? 's' : ''}://${window.location.host}${window.location.pathname}chat`)
+    setInterval(() => {
+      this.ws.isConnected || this.$connect(`ws${window.location.protocol === 'https:' ? 's' : ''}://${window.location.host}${process.env.VUE_APP_ROOT_API}/chat`)
+    }, 1000)
   },
   methods: {
     submitMessageBody(e) {
-      let bodyInput = this.$refs.bodyInput
+      e.preventDefault()
 
-      if (bodyInput.value.length) {
-        try {
-          this.$socket.send(bodyInput.value)
-
-          bodyInput.value = null
-        } catch (ex) {
-          throw ex
-        }
+      try {
+        this.$socket.send(this.bodyInput)
+      } catch (ex) {
+        throw ex
       }
 
-      e.preventDefault()
+      this.bodyInput = null
     }
   }
 }

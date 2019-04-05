@@ -2,10 +2,18 @@
 
 > mojochat Vue.js frontend
 
-## TL;DR
+## Test and build
 
-``` bash
+```bash
 npm install
 
-npm run build
+npm test # Run tests.
+npm run build # Build.
+```
+
+## Development mode
+
+```bash
+NODE_DEV_PROXY_API=ws://localhost:3000 \
+    npm run dev
 ```

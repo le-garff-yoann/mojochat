@@ -1,7 +1,9 @@
 const path = require('path')
 const webpack = require('webpack')
 const { VueLoaderPlugin } = require('vue-loader')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const TerserPlugin = require('terser-webpack-plugin')
+
+const VUE_APP_ROOT_API = process.env.VUE_APP_ROOT_API || ''
 
 module.exports = {
   entry: './src/main.js',
@@ -15,9 +17,7 @@ module.exports = {
       {
         test: /\.vue$/,
         loader: 'vue-loader',
-        options: {
-          loaders: {}
-        }
+        options: { loaders: {} }
       },
       {
         test: /\.js$/,
@@ -34,9 +34,7 @@ module.exports = {
       {
         test: /\.(png|jpg|gif|svg)$/,
         loader: 'file-loader',
-        options: {
-          name: '[name].[ext]?[hash]'
-        }
+        options: { name: '[name].[ext]?[hash]' }
       }
     ]
   },
@@ -47,27 +45,31 @@ module.exports = {
     }
   },
   devServer: {
-    historyApiFallback: true,
-    noInfo: true
-  },
-  performance: {
-    hints: false
+    hot: true,
+    proxy: process.env.NODE_DEV_PROXY_API === undefined ? {} : {
+      [`${VUE_APP_ROOT_API}/chat`]: {
+        target: `${process.env.NODE_DEV_PROXY_API}/chat`,
+        ws: true
+      }
+    }
   },
   devtool: '#eval-source-map',
   plugins: [ new VueLoaderPlugin() ]
 }
 
-module.exports.plugins = (module.exports.plugins || []).concat([  ])
+module.exports.plugins = (module.exports.plugins || []).concat([
+  new webpack.EnvironmentPlugin({ VUE_APP_ROOT_API })
+])
 
 if (process.env.NODE_ENV === 'production') {
   module.exports.devtool = '#source-map'
 
   module.exports.optimization = {
     minimizer: [
-      new UglifyJsPlugin({
+      new TerserPlugin({
         cache: true,
         parallel: true,
-        uglifyOptions: {
+        terserOptions: {
           compress: false,
           ecma: 6,
           mangle: true
@@ -76,10 +78,4 @@ if (process.env.NODE_ENV === 'production') {
       })
     ]
   }
-
-  module.exports.plugins = (module.exports.plugins || []).concat([
-    new webpack.EnvironmentPlugin({
-      NODE_ENV: 'production',
-    })
-  ])
 }
