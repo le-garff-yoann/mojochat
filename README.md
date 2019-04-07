@@ -1,5 +1,7 @@
 # mojochat
 
+![Build Status](https://gitlab.com/le-garff-yoann/mojochat/badges/master/build.svg)
+
 > An anonymous chat with Vue, Gorilla and PostgreSQL.
 
 ## TL;DR
