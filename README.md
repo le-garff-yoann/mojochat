@@ -1,6 +1,6 @@
 # mojochat
 
-![Build Status](https://gitlab.com/le-garff-yoann/mojochat/badges/master/build.svg)
+[![pipeline status](https://gitlab.com/le-garff-yoann/mojochat/badges/master/pipeline.svg)](https://gitlab.com/le-garff-yoann/mojochat/pipelines)
 
 > An anonymous chat with Vue, Gorilla and PostgreSQL.
 
